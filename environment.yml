@@ -3,8 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - jupyter
-  - numba
+  - ipython
   - cython
   - shenfun
   - matplotlib
-  - python=3.9
