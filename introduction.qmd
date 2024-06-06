@@ -4,7 +4,7 @@ subtitle: "11 June 2024, Athens Greece"
 author: "Prof. Mikael Mortensen, University of Oslo"
 format:
   revealjs: 
-    theme: [simple]
+    theme: [simple,mycss.scss]
 jupyter: shenfun
 pandoc:
   to: revealjs
@@ -18,7 +18,9 @@ pandoc:
       https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
   slide-level: 2
 metadata:
+  width: 1200
   margin: 0.4
+  topheight: 2mm
 ---
 
 ## A little bit about myself:
@@ -37,6 +39,23 @@ metadata:
 - High-performance computing
 - The spectral Galerkin method
 
+## Principal developer of Shenfun
+
+High performance computing platform for solving partial differential equations (PDEs) by the spectral Galerkin method
+
+
+![](https://raw.githack.com/spectralDNS/spectralutilities/master/figures/strong_scaling_pencil_col.png){.absolute top=200 left=0 width="500" height="300"}
+
+![](https://raw.githack.com/spectralDNS/spectralutilities/master/movies/Kuramato_movie_128.gif){.absolute top=520 left=750 width="400" height="400"}
+
+![](https://raw.githack.com/spectralDNS/spectralutilities/master/movies/KHmovie_3.gif){.absolute top=600 left=0 width="400" height=300}
+
+![](https://raw.githack.com/spectralDNS/spectralutilities/master/movies/isotropic300_12.gif){.absolute top=200 left=800 width="400" height="300"}
+
+![](https://cdn.jsdelivr.net/gh/spectralDNS/spectralutilities@master/figures/moebius8_trans.png){.absolute top=300 left=550 width="200" height="200"}
+
+![](https://raw.githack.com/spectralDNS/spectralutilities/master/figures/torus2.png){.absolute top=650 left=400 width="300" height="200"}
+
 ## Outline of talk
 
 - The spectral Galerkin method
@@ -45,13 +64,13 @@ metadata:
 
 ## The Galerkin method in a nutshell
 
-Assume that you have an equation
+Assume that you have any equation
 
 $$
 \begin{align}
 u(x) &= f(x) \\
-u'(x) + \alpha u(x) &= f(x) \\
-u''(x) &= f(x)
+u''(x) + xu(x) &= f(x) \\
+u'''(x) + (1-x^2)u'(x) &= f(x)
 \end{align}
 $$
 
@@ -65,7 +84,9 @@ $$
 
 for some functions $u(x)$ and $f(x)$ on $x\in[a, b]$. 
 
-The function $u(x)$ is the **solution**.
+The function $u(x)$ is the **solution**. 
+
+And of course all differential equations require appropriate **boundary conditions**.
 
 ## Function approximation
 
@@ -81,7 +102,12 @@ The functions $\psi_i(x)$ are **basisfunctions**. We say that
 
 $$\{\psi_i\}_{i=0}^N$$ 
 
-is a **basis** and $\psi_i$ are also called **test** or **trial** functions.
+is a **basis** and $\psi_i$ are also called **test** or **trial** functions. 
+
+$$V_N = \text{span}\{\psi_j\}_{j=0}^N$$
+
+represents a **functionspace**.
+
 
 ## A simple example
 
@@ -89,7 +115,7 @@ Assume that $f(x) = x^2$ for $x \in [0, 1]$. Try to find the best possible appro
 
 $$u_N(x) = f(x)$$
 
-when the basis is $\{1, x\}$, i.e., $\psi_0=1$ and $\psi_1=x$.
+when the basis is $\{1, x\}$ such that the functionspace $V_N=\text{span}\{1, x\}$ is the space of all linear functions.
 
 . . .
 
@@ -113,16 +139,16 @@ How is this possible? What options are there? What is **best**?
 
 . . .
 
-Match endpoints. Set $u_N(x_i)=f(x_i)$ for $x_0=0$ and $x_1=1$
-$$u_N(x_i)=\hat{u}_0 + \hat{u}_1 x_i=f(x_i)$$
+Match endpoints $x_0=0$ and $x_1=1$. Set
+$$u_N(x_i)=\hat{u}_0 + \hat{u}_1 x_i=f(x_i) \quad \text{for}\, i=0, 1$$
 
 . . .
 
 We get
 $$
 \begin{align}
-\hat{u}_0 \cdot 1 + \hat{u}_1 \cdot 0 &= 0^2 \\
-\hat{u}_0 \cdot 1 + \hat{u}_1 \cdot 1 &= 1^2
+\hat{u}_0 + \hat{u}_1 \cdot 0 &= 0^2 \\
+\hat{u}_0 + \hat{u}_1 \cdot 1 &= 1^2
 \end{align}
 $$
 
@@ -135,7 +161,7 @@ $$
 ## Two-point collocation
 
 ```{python}
-#| echo: true
+#| echo: false
 #| code-line-numbers: "3-5"
 import numpy as np
 import matplotlib.pyplot as plt
@@ -173,7 +199,7 @@ for some functions $g(x)$ and $h(x)$.
 
 ## The least squares method
 
-Define the error $E = (e, e) = |e|^2$. The least squares method requires 
+Define a global error $E = (e, e) = |e|^2$. The least squares method requires 
 
 $$
 \frac{\partial E}{\partial \hat{u}_i} = 0, \quad i = 0, 1,
@@ -183,7 +209,7 @@ which is two equations for our two unknowns.
 
 . . .
 
-Insert for $e=f-u_N$ and use $\frac{\partial u_N}{\partial \hat{u}_i} = \psi_i$:
+Insert for $e=f-u_N$ and use $\frac{\partial u_N}{\partial \hat{u}_i} = \psi_i$ to obtain after a lot of work:
 
 $$
 \sum_{j=0}^1(\psi_j, \psi_i) \hat{u}_j = (f, \psi_i), \quad i=0, 1.
@@ -229,9 +255,7 @@ display(u_hat[0]+u_hat[1]*x)
 ```
 ## Least squares method
 
-The least squares method becomes a bit messy for differential equations and is not much used for solving PDEs.
-
-In our case the solution becomes: $u_N(x) = -\frac{1}{6}+x$
+The solution becomes: $u_N(x) = -\frac{1}{6}+x$
 ```{python}
 #| echo: false
 #| code-line-numbers: "5"
@@ -239,6 +263,11 @@ xj = np.linspace(0, 1, 100)
 plt.plot(xj, xj**2, 'r', xj, xj, 'b', xj, -1./6.+xj, 'g')
 plt.legend(['Exact', 'Collocation', 'Least squares'], fontsize=18)
 ```
+. . .
+
+The least squares method becomes a bit messy for differential equations and is not much used for solving PDEs.
+
+
 ## What is the best approximation?
 . . .
 
@@ -248,14 +277,16 @@ plt.legend(['Exact', 'Collocation', 'Least squares'], fontsize=18)
 
 . . .
 
-The Galerkin method is similar to the least square method. For approximating functions it is actually identical. However, the approach is much simpler. We simply require that the **error is $L^2$ orthogonal to the test functions** $\psi_i$.
+The Galerkin method is similar to the least square method. Both are **variational** methods. However, the approach is much simpler. We simply require that the **error is $L^2$ orthogonal to the test functions** $\psi_i$:
 
 . . .
 
-Find $\hat{u}_0, \hat{u}_1$ such that
+&nbsp;    
+
+For our simple test problem this means: Find $\hat{u}_0, \hat{u}_1$ such that
 
 $$
-(e, \psi_i) = 0, \quad i=0,1.
+(e, \psi_i) = 0, \quad \text{for}\quad i=0,1.
 $$
 
 Again two equations for two unknowns.
@@ -265,10 +296,10 @@ Again two equations for two unknowns.
 Insert for $e = f - u_N$ to get 
 
 $$
-(f - \sum_{j=0}^1 \hat{u}_j \psi_j, \psi_i) = 0
+(f - \sum_{j=0}^1 \hat{u}_j \psi_j, \psi_i) = 0, \quad i=0, 1.
 $$
 
-We get the same equation as least squares
+We get the same equation as with the least squares method
 
 $$
 \sum_{j=0}^1 (\psi_j, \psi_i) \hat{u}_j = (f, \psi_i), \quad i=0, 1.
@@ -278,18 +309,27 @@ and obviously the same solution (but with less hard work!).
 
 ## The global Galerkin method in a nutshell
 
-The solution is approximated as
+- Choose basis functions $\psi_i$ that span the entire domain and satisfy any boundary conditions (for differential equations)
+
+. . .
+
+- Create a functionspace $V_N=\text{span}\{\psi_i\}_{i=0}^N$ that thus incorporates boundary conditions
+
+. . .
+
+- Find $u_N \in V_N$. This implies that
+
 $$
 u_N(x) = \sum_{i=0}^N \hat{u}_i \psi_i(x)
 $$
 
 . . .
 
-- Choose basis functions that span the entire domain
-- Choose basis functions that satisfy the boundary conditions
-- Require that the error is orthogonal to the basis functions
-- A basis is defined as: $\{\psi_i\}_{i=0}^N$. 
-- A function space is defined as:  $V_N = \text{span}\{\psi_i\}_{i=0}^N$
+- Require that the error 
+
+  $$e(x)=\mathcal{L}(u_N)-f$$ 
+
+  is $L^2$-orthogonal to all $\psi_i$. That is, require $(e, \psi_i)=0 \,\, \forall \, i$.
 
 
 ## Galerkin
@@ -300,10 +340,10 @@ $$
 \mathcal{L}(u) = f
 $$
 
-is declared as follows: Find $u_N \in V_N$ such that
+is often formulated follows: Find $u_N \in V_N$ such that
 
 $$
-(\mathcal{L}(u_N)-f, v) = 0, \quad \forall v \in V_N
+(\underbrace{\mathcal{L}(u_N)-f}_{e(x)}, v) = 0, \quad \forall v \in V_N
 $$
 
 . . .
@@ -316,7 +356,7 @@ $$
 
 . . .
 
-N+1 equations for N+1 unknowns $\{\hat{u}_i\}_{i=0}^N$.
+N+1 equations for N+1 unknowns $\{\hat{u}_i\}_{i=0}^N$. Remember that boundary conditions are included in $V_N$.
 
 ## What are the best basis functions?
 
@@ -338,6 +378,10 @@ ax2.set_title('Odd basis functions')
 ax1.legend([f"$\psi_{i}(x)$" for i in range(0, 6, 2)]);
 ax2.legend([f"$\psi_{i}(x)$" for i in range(1, 6, 2)]);
 ```
+
+With homogeneous Dirichlet boundary conditions built into 
+
+$$V_N=\text{span}\{\sin((j+1)(x+1)\pi)\}_{j=0}^N$$
 
 ## What are the best basis functions?
 
@@ -362,6 +406,33 @@ ax2.legend([f"$L_{i}(x)$" for i in range(0, 5)])
 
 Also odd/even functions for odd/even indices.
 
+. . .
+
+But no boundary conditions built in!
+
+## Chebyshev/Legendre with Dirichlet 
+
+
+- Chebyshev polynomials $\psi_j = T_j(x)-T_{j+2}(x)$
+- Legendre polynomials $\psi_j = L_j(x)-L_{j+2}(x)$
+```{python}
+M = 100
+xj = np.linspace(-1, 1, M+1)
+cheb = np.polynomial.chebyshev.chebvander(xj, 5)
+leg = np.polynomial.legendre.legvander(xj, 5)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+ax1.plot(xj, cheb[:, :-2]-cheb[:, 2:])
+ax2.plot(xj, leg[:, :-2]-leg[:, 2:])
+ax1.set_title('Chebyshev', fontsize=16)
+ax2.set_title('Legendre', fontsize=16)
+ax1.legend([f"$T_{i}(x)-T_{i+2}(x)$" for i in range(0, 5)], loc='lower right')
+ax2.legend([f"$L_{i}(x)-L_{i+2}(x)$" for i in range(0, 5)])
+```
+
+- Still odd/even functions for odd/even indices.
+- $V_N=\text{span}\{T_j-T_{j+2}\}_{i=0}^N$ has homogeneous Dirichlet boundary conditions built in.
+- There are similar bases for different boundary conditions.
+
 ## How about multiple dimensions?
 
 . . .
@@ -372,13 +443,16 @@ $$
 u_N(x, y) = \sum_{i=0}^N \sum_{j=0}^N \hat{u}_{ij} \psi_i(x)\psi_j(y)
 $$
 
-Tensor product functionspace
-
+- Tensor product functionspace with basis functions $\{\psi_i(x)\psi_j(y)\}_{i,j=0}^N$
 $$
 W = V_N \otimes V_N
 $$
 
-with basis functions $\{\psi_i(x)\psi_j(y)\}_{i,j=0}^N$.
+- Inner products are still taken over entire domain $\Omega=[a,b]\times [c, d]$
+
+$$
+(f, g) = \int_{a}^b \int_{c}^d f(x, y) g(x, y) dx dy
+$$
 
 ## Channel flow
 
@@ -392,7 +466,7 @@ with basis functions $\{\psi_i(x)\psi_j(y)\}_{i,j=0}^N$.
 
 ### Advantages {.smaller}
 
-- Makes use of oscillating basis functions with **extremely good approximation preperties**. Requires few degrees of freedom
+- Makes use of oscillating basis functions with **extremely good approximation properties**. 
 - Coefficient matrices are often **sparse**
 - Coefficient matrices are **robust** (low condition numbers)
 
@@ -406,8 +480,8 @@ $$\longrightarrow \text{Shenfun}$$
 
 ## Shenfun
 
-- Shenfun aims to automate the implementation of the spectral Galerkin method
-- Uses a high-level language, where function spaces and equations are defined and combined 
+- Shenfun aims to **automate** the implementation of the spectral Galerkin method
+- Uses a **high-level language**, where function spaces and equations are defined and combined 
 - Uses MPI to run on multiple processors on supercomputers
 
 <img src="https://rawcdn.githack.com/spectralDNS/spectralutilities/473129742f0b5f8d57e8c647809272c0ced99a45/movies/RB_200k_small.png" style="float:left" width="600">
