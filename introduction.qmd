@@ -31,6 +31,12 @@ metadata:
 - Associate Professor at the University of Oslo (2012-2019)
 - Full Professor at UiO since 2019
 
+. . .
+
+![](sunny.jpg){.absolute top=550 left=300 width="100"}
+![](The_University_of_Oslo.jpg){.absolute top=650 left=280 width="150"}
+[which today is sunny and nice 20 $^{o}$C]{.absolute top=800 left=100}
+
 ## Main interests
 
 - Computational Fluid Dynamics
@@ -56,21 +62,36 @@ High performance computing platform for solving partial differential equations (
 
 ![](https://raw.githack.com/spectralDNS/spectralutilities/master/figures/torus2.png){.absolute top=650 left=400 width="300" height="200"}
 
+## Recent papers using Shenfun {.smaller}
+
+- [<span style="color:green"> Solving Partial Differential Equations with Equivariant Extreme Learning Machines</span>](https://www.researchgate.net/profile/Sebastian-Peitz/publication/380897446_Solving_Partial_Differential_Equations_with_Equivariant_Extreme_Learning_Machines/links/66544d0fbc86444c7205cbdb/Solving-Partial-Differential-Equations-with-Equivariant-Extreme-Learning-Machines.pdf), H. Harder, J. Rabault, R. Vinuesa, M. Mortensen, S. Peitz. Submitted (2024)
+- Vorticity Topology in Turbulent Micropolar Flows, **George Sofiadis**, **Ioannis J. Sarris**, M. Mortensen. In preparation (2024) 
+- [A global spectral-Galerkin investigation of a Rayleigh–Taylor instability in plasma using an MHD–Boussinesq model](https://pubs.aip.org/aip/adv/article/13/10/105319/2917415)  A. Piterskaya, Wojciech J. Miloch, M. Mortensen, AIP Advances 13, 105319 (2023)
+- [<span style="color:green">Effective control of two-dimensional Rayleigh–Bénard convection: Invariant multi-agent reinforcement learning is all you need</span>](https://pubs.aip.org/aip/pof/article/35/6/065146/2900730) C. Vignon, J. Rabault, J. Vasanth, F. Alcántara-Ávila, M. Mortensen, R. Vinuesa, Physics of Fluids 35, 065146 (2023)
+- [A Generic and Strictly Banded Spectral Petrov–Galerkin Method for Differential Equations with Polynomial Coefficients](https://epubs.siam.org/doi/full/10.1137/22M1492842) M. Mortensen, SIAM J. on Scientific Computing, 45, 1, A123-A146, (2023)
+- [<span style="color:green">Variance representations and convergence rates for data-driven approximations of Koopman operators</span>](https://arxiv.org/abs/2402.02494) F. M. Philipp, M. Schaller, S. Boshoff, S. Peitz, F. Nüske, K. Worthmann, submitted (2024)
+- [<span style="color:green">Partial observations, coarse graining and equivariance in Koopman operator theory for large-scale dynamical systems</span>](https://arxiv.org/abs/2307.15325), S. Peitz, H. Harder, F. Nüske, F. Philipp, M. Schaller, K. Worthmann, submitted (2024)
+- [<span style="color:green">Koopman-Based Surrogate Modelling of Turbulent Rayleigh-Bénard Convection</span>](https://arxiv.org/abs/2405.06425) T. Markmann, M. Straat, B. Hammer, submitted (2024)
+- [Shenfun: High performance spectral Galerkin computing platform](https://joss.theoj.org/papers/10.21105/joss.01071.pdf), M. Mortensen, Journal of Open Source Software, 3(31), 1071 (2018)
+
+<span style="color:green">Green papers deal with different aspects of machine learning, where Shenfun is used as PDE solver in the background</span>
+
 ## Outline of talk
 
 - The spectral Galerkin method
 - An introduction to Shenfun
 - Some Shenfun examples
 
-## The Galerkin method in a nutshell
+## The problem at hand
 
-Assume that you have any equation
+We will consider any **linear** equation of any order and dimension
 
 $$
 \begin{align}
 u(x) &= f(x) \\
 u''(x) + xu(x) &= f(x) \\
-u'''(x) + (1-x^2)u'(x) &= f(x)
+\nabla^2 u(x, y) + (1-x^2)u(x, y) &= f(x, y) \\
+\Delta^2 u(x, y, z) &= f(x, y, z)
 \end{align}
 $$
 
@@ -82,23 +103,25 @@ $$
 \end{equation}
 $$
 
-for some functions $u(x)$ and $f(x)$ on $x\in[a, b]$. 
-
-The function $u(x)$ is the **solution**. 
-
-And of course all differential equations require appropriate **boundary conditions**.
-
-## Function approximation
-
-The **global** Galerkin method tries to approximate $u(x)$ using 
+The function $u(\boldsymbol{x})$ is the **solution**. And of course all differential equations require appropriate **boundary conditions**
 
 $$
-u(x) \approx u_N(x) = \sum_{i=0}^N \hat{u}_i \psi_i(x)
+\mathcal{B}(u)=g
+$$
+
+We will only consider homogeneous boundary conditions, where $g=0$ even though Shenfun can handle any inhomogeneous boundary conditions.
+
+## Global approximations
+
+A **global** discretization method tries to approximate $u(x)$ using 
+
+$$
+u(x) \approx u_N(x) = \sum_{i=0}^N \hat{u}_i \psi_i(x), \quad x \in [a, b]
 $$
 
 where $\{\hat{u}_i\}_{i=0}^N$ are unknown coefficients (degrees of freedom).
 
-The functions $\psi_i(x)$ are **basisfunctions**. We say that 
+The **global** functions $\psi_i(x)$ are **basisfunctions**. We say that 
 
 $$\{\psi_i\}_{i=0}^N$$ 
 
@@ -108,8 +131,27 @@ $$V_N = \text{span}\{\psi_j\}_{j=0}^N$$
 
 represents a **functionspace**.
 
+## Global vs local methods
 
-## A simple example
+Local methods use basis functions that are defined only locally. 
+
+- Finite element methods
+- Spectral element method
+- Finite volume
+- Finite difference
+
+Low order, but high flexibility. At least for the first three.
+Can easily handle complex geometries.
+
+Low accuracy compared to global methods.
+
+![](fe_mesh1D_phi_i_im1.png){.absolute left=100 width=800}
+
+## What is the global Galerkin method? 
+
+. . .
+
+**A simple example**
 
 Assume that $f(x) = x^2$ for $x \in [0, 1]$. Try to find the best possible approximation
 
@@ -118,6 +160,8 @@ $$u_N(x) = f(x)$$
 when the basis is $\{1, x\}$ such that the functionspace $V_N=\text{span}\{1, x\}$ is the space of all linear functions.
 
 . . .
+
+&nbsp;
 
 In other words, find the unknown $\{\hat{u}_0, \hat{u}_1\}$ such that
 
@@ -128,6 +172,8 @@ $$
 is the best possible approximation to $x^2$.
 
 . . .
+
+&nbsp;
 
 How is this possible? What options are there? What is **best**?
 
@@ -176,8 +222,6 @@ Is this the best possible approximation? In what sense? How do we pick the collo
 
 ## What is the best approximation?
 
-. . .
-
 - <span style="color:gray">Two-point Collocation?</span>
 - The least squares method?
 
@@ -208,6 +252,8 @@ $$
 which is two equations for our two unknowns.
 
 . . .
+
+&nbsp;
 
 Insert for $e=f-u_N$ and use $\frac{\partial u_N}{\partial \hat{u}_i} = \psi_i$ to obtain after a lot of work:
 
@@ -269,7 +315,6 @@ The least squares method becomes a bit messy for differential equations and is n
 
 
 ## What is the best approximation?
-. . .
 
 - <span style="color:gray">Two-point Collocation?</span>
 - <span style="color:gray">The least squares method?</span>
@@ -309,11 +354,11 @@ and obviously the same solution (but with less hard work!).
 
 ## The global Galerkin method in a nutshell
 
-- Choose basis functions $\psi_i$ that span the entire domain and satisfy any boundary conditions (for differential equations)
+- Choose basis functions $\psi_i$ that span the entire domain and satisfy any (homogeneous) boundary conditions (for differential equations)
 
 . . .
 
-- Create a functionspace $V_N=\text{span}\{\psi_i\}_{i=0}^N$ that thus incorporates boundary conditions
+- Create a functionspace $V_N=\text{span}\{\psi_i\}_{i=0}^N$ that thus incorporates the boundary conditions
 
 . . .
 
@@ -325,11 +370,13 @@ $$
 
 . . .
 
-- Require that the error 
+- Such that the error 
 
-  $$e(x)=\mathcal{L}(u_N)-f$$ 
+$$
+e(x)=\mathcal{L}(u_N)-f
+$$ 
 
-  is $L^2$-orthogonal to all $\psi_i$. That is, require $(e, \psi_i)=0 \,\, \forall \, i$.
+is $L^2$-orthogonal to all $\psi_i$. 
 
 
 ## Galerkin
@@ -346,9 +393,11 @@ $$
 (\underbrace{\mathcal{L}(u_N)-f}_{e(x)}, v) = 0, \quad \forall v \in V_N
 $$
 
+where $u_N$ is called a **trial function** and $v$ a **test function**. For the Galerkin method test and trial spaces are **identical**.
+
 . . .
 
-This is the same as saying: Find $u_N \in V_N$ such that
+This is also the same as saying: Find $u_N \in V_N$ such that
 
 $$
 (\mathcal{L}(u_N)-f, \psi_i) = 0, \quad \forall \, i=0, 1, \ldots, N.
@@ -362,7 +411,7 @@ N+1 equations for N+1 unknowns $\{\hat{u}_i\}_{i=0}^N$. Remember that boundary c
 
 . . .
 
-- sines and cosines (Fourier exponentials)
+- Sines and cosines (or periodic complex Fourier exponentials $e^{\hat{\imath} j\pi x}$)
 
 For example $\psi_j = \sin((j+1)(x+1)\pi), x \in [-1,1]$
 
@@ -387,7 +436,7 @@ $$V_N=\text{span}\{\sin((j+1)(x+1)\pi)\}_{j=0}^N$$
 
 . . .
 
-- <span style="color:gray">sines and cosines (Fourier exponentials)</span>
+- <span style="color:gray">sines and cosines (or periodic complex Fourier exponentials $e^{\hat{\imath}j\pi x}$)</span>
 - Chebyshev polynomials $\psi_j = T_j(x)$
 - Legendre polynomials $\psi_j = L_j(x)$
 ```{python}
@@ -430,7 +479,7 @@ ax2.legend([f"$L_{i}(x)-L_{i+2}(x)$" for i in range(0, 5)])
 ```
 
 - Still odd/even functions for odd/even indices.
-- $V_N=\text{span}\{T_j-T_{j+2}\}_{i=0}^N$ has homogeneous Dirichlet boundary conditions built in.
+- $V_N=\text{span}\{T_j-T_{j+2}\}_{j=0}^N$ has homogeneous Dirichlet boundary conditions built in.
 - There are similar bases for different boundary conditions.
 
 ## How about multiple dimensions?
@@ -460,7 +509,9 @@ $$
 - Cartesian grid $[-1, 1] \times [0, 2\pi] \times [0, 2\pi]$
 - Chebyshev $\times$ Fourier $\times$ Fourier
 
-<img src="https://rawcdn.githack.com/spectralDNS/spectralutilities/473129742f0b5f8d57e8c647809272c0ced99a45/movies/RB_200k_small.png" >
+
+![](https://rawcdn.githack.com/spectralDNS/spectralutilities/473129742f0b5f8d57e8c647809272c0ced99a45/movies/RB_200k_small.png)
+
 
 ## The spectral Galerkin method
 
@@ -472,17 +523,28 @@ $$
 
 ### However {.smaller}
 
-- No complex geometries.
+:::: {.columns}
+
+::: {.column width="60%"}
+- No complex geometries, but curvilinear coordinates are ok.
 - Nonlinear terms implemented explicitly (pseudospectral)
 - Generally considered more difficult to implement since we solve equations in spectral space
+:::
 
-$$\longrightarrow \text{Shenfun}$$
+::: {.column width="40%"}
+<img src="https://uio-my.sharepoint.com/:i:/r/personal/mikaem_uio_no/Documents/Ginzburg-Landau.png?csf=1&web=1&e=JhneJh" width=300>
+
+:::
+
+::::
+
 
 ## Shenfun
 
 - Shenfun aims to **automate** the implementation of the spectral Galerkin method
 - Uses a **high-level language**, where function spaces and equations are defined and combined 
 - Uses MPI to run on multiple processors on supercomputers
+
 
 <img src="https://rawcdn.githack.com/spectralDNS/spectralutilities/473129742f0b5f8d57e8c647809272c0ced99a45/movies/RB_200k_small.png" style="float:left" width="600">
 <img src="https://rawcdn.githack.com/spectralDNS/spectralutilities/473129742f0b5f8d57e8c647809272c0ced99a45/movies/isotropic_cropped.gif" style="float:right" width="400"> 

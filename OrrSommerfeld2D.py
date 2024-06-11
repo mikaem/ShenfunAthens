@@ -115,7 +115,7 @@ if __name__ == '__main__':
         'conv': 1,
         'alfa': 1.05,
         'modplot': 50,
-        'modsave': 1000,
+        'modsave': 100,
         'moderror': 50,
         'family': 'C',
         'K0': 0,
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     OS = True
     c = OrrSommerfeld2D(**d)
     t, tstep = c.initialize(from_checkpoint=False)
-    c.solve(t=t, tstep=tstep, end_time=1)
+    c.solve(t=t, tstep=tstep, end_time=0.1)
     print('Computing time %2.4f'%(time()-t0))
     if comm.Get_rank() == 0:
-        generate_xdmf('_'.join((d['filename'], 'U'))+'.h5')
+        generate_xdmf('_'.join((d['filename'], 'U'))+'.h5', order='visit')
