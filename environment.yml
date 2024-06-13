@@ -5,5 +5,5 @@ dependencies:
   - jupyter
   - ipython
   - cython
-  - shenfun
+  - shenfun>=4.2.1
   - matplotlib
